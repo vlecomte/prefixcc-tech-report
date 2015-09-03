@@ -1,6 +1,15 @@
 \documentclass[a4paper,10pt]{article}
 \usepackage{mystyle}
 \usepackage[top=3cm, bottom=3cm, left=3cm, right=3cm]{geometry}
+\def\labelitemi{---}
+
+\lstset{
+    %basicstyle=\ttfamily,
+    language=Python,
+    frame=single,
+    numbers=left,
+    breaklines=true,
+}
 
 \begin{document}
 
@@ -40,14 +49,117 @@ While the following results would be invalid:
 \end{itemize}
 
 \section{The algorithm}
-\textbf{TODO}
-\subsection{Bound deduction and filtering}
-\textbf{TODO}
+The algorithm consists of two main parts:
+\begin{enumerate}
+    \item The deduction and filtering of the bounds, where we analyze the bounds given to filter out the redundant ones and add additional ones when possible.
+    \item The propagation, which takes the bounds obtained in the first part and applies pruning identical to regular forward-checking GCC, but in an efficient unified manner.
+\end{enumerate}
+
+We will start by explaining the \emph{bound deduction} (\ref{subsec:deduction}) and \emph{bound filtering} (\ref{subsec:filtering}) steps, then we will introduce the concept of \emph{critical values} (\ref{subsec:critical}) and how it is the key in unifying the bound checking, and finally we will go on to the \emph{merging and pruning process} (\ref{subsec:merging-pruning}), the main propagation mechanism.
+
+\subsection{Bound deduction}
+\label{subsec:deduction}
+
+The deduction step aims to obtain better bounds for the occurrences of a value than those given in the input, based on two factors:
+\begin{itemize}
+    \item the values of the bounds on the same value for other prefixes, ``inter-prefix'';
+    \item the values of the opposite bounds for the same prefix on other values, ``inter-value''.
+\end{itemize}
+
+\subsubsection{Inter-prefix deduction}
+
+The first factor is based on these four types of deduction:
+\begin{itemize}
+    \item if there are at least three \texttt{A}s in the first five variables, there are also at least three \texttt{A}s in the first six variables (I), and at least \emph{two} in the first four (because we are only possibly removing one) (II);
+    \item if there are at most three \texttt{A}s in the first five variables, there are also at most three \texttt{A}s in the first four variables (III), and at most \emph{four} in the first six (because we are only possibly adding one) (IV).
+\end{itemize}
+
+In practice, those deductions can be made by maintaining an array of the best known bounds for each prefix and then traversing once forwards for deductions (I) and (IV) and once backwards for deductions (II) and (III).
+
+Here is a pseudocode, for a certain value:
+\begin{lstlisting}
+for i in 1 to (numberOfVariables-1):
+    lower(i) = max(lower(i), lower(i-1))
+    upper(i) = min(upper(i), upper(i-1) + 1)
+for i in (numberOfVariables-2) to 0:
+    lower(i) = max(lower(i), lower(i+1) - 1)
+    upper(i) = min(upper(i), upper(i+1))
+\end{lstlisting}
+
+\subsubsection{Inter-value deduction}
+
+The second factor is based on these two types of deduction:
+\begin{itemize}
+    \item in the first five variables, if the minimal number of occurrences for all the other values is three, then we can decrease the maximal number of occurrences for this value to two (since there are at most for five occurences in total);
+    \item in the first five variables, if the maximal number of occurrences for all the other values is three, then we can increase the minimal number of occurrences for this value to two (since there are at least five occurrences in total).
+\end{itemize}
+
+In practice, those deductions can be made for each prefix and for each value by computing the sums of all the lower (resp. upper) bounds for all of the other values and setting the upper (resp. lower) bound of this value to the length of the prefix minus that sum (if this results in a stronger bound).
+
+Here is a pseudocode, for a certain prefix:
+\begin{lstlisting}
+for v in values:
+    lower(v) = max(lower(v), sizeOfPrefix - (sum(upper) - upper(v)))
+    upper(v) = min(upper(v), sizeOfPrefix - (sum(lower) - lower(v)))
+\end{lstlisting}
+
+\subsection{Bound filtering}
+\label{subsec:filtering}
+
+Once the algorithm has deduced the best bounds it could, one would like to filter them and only keep those that add information. This step sounds a lot like applying the inter-prefix deduction in reverse: instead of creating new bounds by deducing them from the next or previous prefix, we will remove them if they can be deduced in that way.
+
+In practice, we will traverse the prefixes from left to right, and:
+\begin{enumerate}
+    \item only add a bound if it gives more information than the previous bound;
+    \item remove the previous bounds that can be deduced from the bound we're adding.
+\end{enumerate}
+
+That second point is similar in spirit with the ``monotone chain'' algorithm for convex hulls: we're trying to find a minimal set of bounds (resp. points) and to ensure it's minimal, when adding a new bound (resp. point), we remove the previous bounds (resp. points) as long as they're being made useless by the new one.
+
+For lower bounds, we base ourselves on the inter-prefix deduction laws (see \ref{subsec:deduction}) in this way:
+\begin{itemize}
+    \item a bound only adds information if it is higher than the previous one (I);
+    \item a previous bound has to be removed if it is lower or equal to the new bound \emph{minus their distance} (II).
+\end{itemize}
+
+For example, if we have a lower bound of one on the first three variables, we can add a lower bound of three on the first five variables, because it adds informations. However, we will then have to remove the previous constraint, because that lower bound of one can be directly deduced from the one we're adding.
+
+In general, we can visually check if a lower bound is stronger than another by ``extending'' it, decreasing constantly on the left and staying constant on the right, like this: \textbf{TODO: insert diagram}
+
+Here is a pseudocode of the filtering:
+\begin{lstlisting}
+for cur in lowerBounds:
+    if cur.bound > last.bound:
+        while last.bound <= cur.bound - (cur.index - last.index):
+            removeLast()
+        add(cur)
+\end{lstlisting}
+
+The situation is similar for upper bounds:
+\begin{itemize}
+    \item a bound only adds information if it is lower than the previous one \emph{plus their distance} (IV);
+    \item a previous bound has to be removed if it is higher or equal to the new bound (III).
+\end{itemize}
+
+The ``extension'' works in the same way: \textbf{TODO: insert diagram}
+
+Here is a pseudocode of the filtering:
+\begin{lstlisting}
+for cur in upperBounds:
+    if cur.bound < last.bound + (cur.index - last.index):
+        while last.bound >= cur.bound
+            removeLast()
+        add(cur)
+\end{lstlisting}
+
 \subsection{The concept of critical values}
+\label{subsec:critical}
 \textbf{TODO}
 \subsection{Merging and pruning}
+\label{subsec:merging-pruning}
 \textbf{TODO}
-\subsection{Complexity}
+
+\section{Complexity}
 \textbf{TODO}
 
 \section{Conclusion and use cases}
