@@ -1,0 +1,56 @@
+\documentclass[a4paper,10pt]{article}
+\usepackage{mystyle}
+\usepackage[top=3cm, bottom=3cm, left=3cm, right=3cm]{geometry}
+
+\begin{document}
+
+\title{\texttt{PrefixCCFWC}: technical report}
+\author{Victor Lecomte}
+\maketitle
+
+\begin{abstract}
+In scheduling, it may be useful to specify cardinality constraints on certain prefixes of an array of variables. For example, if only one item can be produced each day, and you have to deliver 3 units of product $A$ after 7 days, you will want to impose that there be at least 3 occurences of $A$ among the production variables for the first 7 days.
+
+This constraint allows you to apply many such constraints on several values without the overhead of creating a GCC for each of them, and with some additional pruning.
+\end{abstract}
+
+\tableofcontents
+
+\section{Problem statement}
+We are given an array of integer variables and a number of constraints of the form:
+\begin{quote}
+There should be at least/most $b$ occurrences of value $v$ among the $i$ first variables.
+\end{quote}
+In scheduling this will mostly be lower bounds coming from quantities to be produced at a certain date, but there could also be upper bounds coming from storage limitations.
+
+For example let's consider four variables with values either \texttt{A} or \texttt{B}, and the following constraints:
+\begin{itemize}
+    \item there should be at least one \texttt{B} in the first two variables ($b=1$, $v=\texttt{B}$, $i=2$);
+    \item there should be at most two \texttt{A}s in all the variables ($b=2$, $v=\texttt{A}$, $i=4$).
+\end{itemize}
+Then the following results would be valid:
+\begin{itemize}
+    \item \texttt{A B A B}
+    \item \texttt{B B B B}
+\end{itemize}
+While the following results would be invalid:
+\begin{itemize}
+    \item \texttt{A A B B} (no \texttt{B} in the first two variables)
+    \item \texttt{B A A A} (too many \texttt{A}s)
+\end{itemize}
+
+\section{The algorithm}
+\textbf{TODO}
+\subsection{Bound deduction and filtering}
+\textbf{TODO}
+\subsection{The concept of critical values}
+\textbf{TODO}
+\subsection{Merging and pruning}
+\textbf{TODO}
+\subsection{Complexity}
+\textbf{TODO}
+
+\section{Conclusion and use cases}
+\textbf{TODO}
+
+\end{document}
