@@ -55,7 +55,7 @@ The algorithm consists of two main parts:
     \item The propagation, which takes the bounds obtained in the first part and applies pruning identical to regular forward-checking GCC, but in an efficient unified manner.
 \end{enumerate}
 
-We will start by explaining the \emph{bound deduction} (\ref{subsec:deduction}) and \emph{bound filtering} (\ref{subsec:filtering}) steps, then we will introduce the concept of \emph{critical values} (\ref{subsec:critical}) and how it is the key in unifying the bound checking, and finally we will go on to the \emph{merging and pruning process} (\ref{subsec:merging-pruning}), the main propagation mechanism.
+We will start by explaining the \emph{bound deduction} (\ref{subsec:deduction}) and \emph{bound filtering} (\ref{subsec:filtering}) steps, then we will introduce the concept of \emph{critical points} (\ref{subsec:critical}) and how it is the key in unifying the bound checking, and finally we will go on to the \emph{merging and pruning process} (\ref{subsec:merging-pruning}), the main propagation mechanism.
 
 \subsection{Bound deduction}
 \label{subsec:deduction}
@@ -152,7 +152,7 @@ for cur in upperBounds:
         add(cur)
 \end{lstlisting}
 
-\subsection{The concept of critical values}
+\subsection{The concept of critical points}
 \label{subsec:critical}
 
 Now that we have obtained an optimal set of bounds, we have to figure out how to quickly check on an update whether a bound has reached its objective: we want to know when the number of variables that have a value reaches the lower bound, so that we can assign them all; or when the number of variables that are bound to the value reaches the upper bound, so that we can remove the value from all the other variables.
@@ -163,16 +163,41 @@ In order to do that, we divide the variables into segments separated by the boun
 
 For example, if for some value we have an upper bound of 2 for the prefix $[0,3[$ and an upper bound of 5 for the prefix $[0,8[$, we will separate the variables into the segments $[0,3[$ and $[3,8[$. We will examine the differences between the bounds. If in the segment $[3,8[$ the number of variables assigned to the value reaches $5-2=3$, that means there will be at least 3 occurrences of the value in that segment. As a consequence, if the upper bound of 2 in the prefix $[0,3[$ fails, it means there will be more than 2 occurrences of the value in $[0,3[$ and thus more than 5 occurrences of the value in $[0,8[$, which makes the upper bound of 5 in the prefix $[0,8[$ fail as well. This means that the upper bound for $[0,3[$ does not add any information anymore, and we can eliminate it.
 
-We will name this difference $5-2=3$ the \emph{critical value} for that segment. It means that when the number of variables assigned to the value in the segment reaches that value, we can eliminate the bound on the left of the segment. On updates, our only job will be to check whether we reached the critical value, and trigger actions if that is the case.
+We will name this difference $5-2=3$ the \emph{critical point} for that segment. It means that when the number of variables assigned to the value in the segment reaches that value, we can eliminate the bound on the left of the segment. On updates, our only job will be to check whether we reached the critical point, and trigger actions if that is the case.
 
-The critical value also makes sense for lower bounds: if this time we take a \emph{lower} bound of 2 for $[0,3[$ and a \emph{lower} bound of 5 for $[0,8[$, imagine that the number of variables that have the value in the segment (bound or not) decreases to 3, there will be at most 3 occurrences of the value in that segment. If the lower bound in the prefix $[0,3[$ fails, then there will be less than 2 occurrences of the value in $[0,3[$ and thus less than 5 occurrences in $[0,8[$, which makes the lower bound in the prefix $[0,8[$ fail as well. This means that the lower bound for $[0,3[$ does not add any information anymore, and we can eliminate it.
+The critical point also makes sense for lower bounds: if this time we take a \emph{lower} bound of 2 for $[0,3[$ and a \emph{lower} bound of 5 for $[0,8[$, imagine that the number of variables that have the value in the segment (bound or not) decreases to 3, there will be at most 3 occurrences of the value in that segment. If the lower bound in the prefix $[0,3[$ fails, then there will be less than 2 occurrences of the value in $[0,3[$ and thus less than 5 occurrences in $[0,8[$, which makes the lower bound in the prefix $[0,8[$ fail as well. This means that the lower bound for $[0,3[$ does not add any information anymore, and we can eliminate it.
+
+Since reaching the critical point eliminates the need for the bound on the left end of the segment, we can merge the segment with the one left of that bound. We then start tracking the progress towards the critical point on that larger segment.
 
 \subsection{Merging and pruning}
 \label{subsec:merging-pruning}
-\textbf{TODO}
+
+Now we have to use the idea of critical points and segments to determine when to prune, and in which prefix we have to assign or remove values from variables.
+
+First we observe that, when we reach the critical point on a segment whose left end is zero, that means we have reached a critical point of the bound it represents, and we have to trigger pruning. For example, if we have an upper bound of 2 on the prefix $[0,3[$ and two variables have been assigned to the value, we have to remove the value from the third variable, otherwise it might create a third occurrence. Similarly, if it had been a lower bound and there were only two variables with the value, we would have had to assign them both.
+
+Secondly we observe that in that case we cannot prune any further: to take that same example with another upper bound of 5 at $[0,8[$, if the segments have not yet been merged, it means that the critical point in $[3,8[$ has not yet been reached, and there are less than 5 variables assigned to the value in $[0,8[$, which is not enough to trigger pruning for that upper bound. Same goes for the lower bounds: there would still be more than 5 variables that have the value in $[0,8[$, and that is too much to trigger pruning.
+
+Therefore, we realize that to obtain the same pruning as individual GCCs, we only have to prune when the segment on the very left reaches its critical point, and we only have to prune the variables of that segment. The rest of the time, when the critical point is reached, we only have to merge the segment with the one on the left. In order to know which variables to prune, we keep a list of the variables that have the value but are not bound to it. When pruning, we will have to assign them or remove the value from them (and only them).
+
+So we have reduced the problem of determining what to prune to the problem of merging adjacent segments and determining in which segment a variable is. This problem can be solved easily using a union-find data structure.
 
 \section{Complexity}
-\textbf{TODO}
+
+To examine the algorithmic complexity of this algorithm, let us define $n$ as the number of variables and $u$ as the number of updates, that is, the sum of the number of value removals and the number of variable bindings over the whole search. That means that when we prune by assigning or removing a value from a variable, this counts in $u$ as well.
+
+When the constraint receives an update, it has to:
+\begin{itemize}
+    \item find which segment the updated variable belongs to (a ``find'' operation);
+    \item update the counter that checks if we are at the critical point yet (constant time);
+    \item remove it from the list of unbound variables (constant time);
+    \item if we reached the critical point and this is the leftmost segment, prune the unbound (constant time per unbound);
+    \item if we reached the critical point and this is \emph{not} the leftmost segment, merge with the segment on the left (a ``union'' operation).
+\end{itemize}
+
+The fourth step above deserves more explanation: even though it can take $O(n)$ for that particular update to be processed, we are updating variables in constant time, so it still counts as amortized constant time per update.
+
+When we combine all of this, we discover that the amortized complexity is the number of updates times the cost of a union-find operation, so it would seem that this would give $O(u\cdot\alpha(n))$. However, since we are working with a reversible union-find structure, the same union-find operation could be repeated many times, so we cannot use the amortized constant time $O(\alpha(n))$ of union-find operations, but rather the $O(\log n)$ worst-case cost of ``find'' operations. This gives the complexity $O(u \cdot \log n)$.
 
 \section{Conclusion and use cases}
 \textbf{TODO}
