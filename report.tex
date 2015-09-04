@@ -4,7 +4,6 @@
 \def\labelitemi{---}
 
 \lstset{
-    %basicstyle=\ttfamily,
     language=Python,
     frame=single,
     numbers=left,
@@ -124,7 +123,14 @@ In the case of lower bounds, we use these deduction laws (see \ref{subsec:deduct
 
 For example, if we have a lower bound of one on the first three variables, we can add a lower bound of three on the first five variables, because it adds informations. However, we will then have to remove the previous constraint, because that lower bound of one can be directly deduced from the one we're adding.
 
-In general, we can visually check if a lower bound is stronger than another by ``extending'' it, decreasing constantly on the left and staying constant on the right, like this: \textbf{TODO: insert diagram}
+In general, we can visually check if a lower bound is stronger than another by ``extending'' it, decreasing constantly on the left and staying constant on the right, as shown in figure~\ref{fig:lower-bounds}.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.7\textwidth]{lower-bounds}
+    \caption{The selection of lower bounds}
+    \label{fig:lower-bounds}
+\end{figure}
 
 Here is a pseudocode of the filtering for lower bounds:
 \begin{lstlisting}
@@ -141,7 +147,14 @@ The situation is similar for upper bounds:
     \item a previous bound has to be removed if it is higher or equal to the new bound (III).
 \end{itemize}
 
-The visual extension works in a similar way: \textbf{TODO: insert diagram}
+The visual extension works in a similar way, as shown in figure~\ref{fig:upper-bounds}.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.6\textwidth]{upper-bounds}
+    \caption{The selection of upper bounds}
+    \label{fig:upper-bounds}
+\end{figure}
 
 Here is a pseudocode of the filtering for upper bounds:
 \begin{lstlisting}
