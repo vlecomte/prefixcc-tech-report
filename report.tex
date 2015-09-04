@@ -180,24 +180,50 @@ First we observe that, when we reach the critical point on the leftmost segment,
 
 Secondly we observe that we cannot prune any further than that segment: take that same example with another upper bound of 5 at $[0,8)$, if the segments have not yet been merged, it means that the critical point in $[3,8)$ has not yet been reached, and there are less than 5 variables assigned to the value in $[0,8)$, which is not enough to trigger pruning linked to that upper bound. Same goes for the lower bounds: there would still be more than 5 variables that have the value in $[0,8)$, and that is too much to trigger pruning.
 
-Therefore, we realize that to obtain the same pruning as individual GCCs, we only have to prune when the segment on the very left reaches its critical point, and when that happens we have to prune the variables of that segment and only there. The rest of the time, when the critical point is reached, we just merge the segment with the one on the left.
+Therefore, we realize that to obtain the same pruning as individual GCCs, we only have to prune when the segment on the very left reaches its critical point, and when that happens we have to prune the variables of that segment and only there. Afterwards, we can merge that segment with the one on the right, because it becomes the next candidate for pruning. The rest of the time, when the critical point is reached, we just merge the segment with the one on the left.
 
-In order to know which variables to prune, we keep an ordered list of the variables that have the value but are not bound to it. When pruning, they will be the only ones we have to consider.
+In order to know which variables to prune, we keep an ordered list of the variables that have the value but are not bound to it, which we call the ``unbound list''. When pruning, they will be the only ones we have to consider.
 
 So we have reduced the problem of determining what to prune to the problem of merging adjacent segments and determining in which segment a variable is. This problem can be solved easily using a union-find data structure.
 
-\textbf{TODO: maybe add pseudocode}
+Here is a pseudocode for the update value removals, with lower bound segments:
+\begin{lstlisting}
+unboundList.remove(variable)
+segment = findLowerBoundSegment(variable)
+segment.numHavingTheValue -= 1
+if segment.numHavingTheValue == segment.criticalPoint:
+    if segment.leftEnd == 0:
+        for var in unboundList.upto(segment.rightEnd):
+            var.assign(value)
+        union(segment, segment.onRight)
+    else:
+        union(segment, segment.onLeft)
+\end{lstlisting}
+
+And for the update on variable bindings, with upper bound segments:
+\begin{lstlisting}
+unboundList.remove(variable)
+segment = findUpperBoundSegment(variable)
+segment.numBoundToTheValue += 1
+if segment.numBoundToTheValue == segment.criticalPoint:
+    if segment.leftEnd == 0:
+        for var in unboundList.upTo(segment.rightEnd):
+            var.removeValue(value)
+        union(segment, segment.onRight)
+    else:
+        union(segment, segment.onLeft)
+\end{lstlisting}
 
 \section{Complexity}
 
 To examine the algorithmic complexity of this algorithm, let us define $n$ as the number of variables and $u$ as the number of updates, that is, the sum of the number of value removals and the number of variable bindings over the whole search. Note that when we prune by assigning or removing a value from a variable, it counts in $u$ as well.
 
-When the constraint receives an update, it has to:
+As a reminder, when the constraint receives an update, it has to:
 \begin{itemize}
     \item find which segment the updated variable belongs to (a ``find'' operation);
     \item update the counter that checks if we are at the critical point yet (constant time);
     \item remove it from the list of unbound variables (constant time);
-    \item if we reached the critical point and this is the leftmost segment, prune in the segment (constant time per variable pruned);
+    \item if we reached the critical point and this is the leftmost segment, prune in the segment (constant time per variable pruned) then merge with the segment on the right (a ``union'' operation);
     \item if we reached the critical point and this is \emph{not} the leftmost segment, merge with the segment on the left (a ``union'' operation).
 \end{itemize}
 
