@@ -77,10 +77,10 @@ In practice, those deductions can be made by maintaining an array of the best kn
 
 Here is a pseudocode, for a certain value:
 \begin{lstlisting}
-for i in 1 to (numberOfVariables-1):
+for i in 1 to (numberOfVariables):
     lower(i) = max(lower(i), lower(i-1))     # deduction (I)
     upper(i) = min(upper(i), upper(i-1) + 1) # deduction (IV)
-for i in (numberOfVariables-2) to 0:
+for i in (numberOfVariables-1) to 0:
     lower(i) = max(lower(i), lower(i+1) - 1) # deduction (II)
     upper(i) = min(upper(i), upper(i+1))     # deduction (III)
 \end{lstlisting}
