@@ -27,14 +27,14 @@ This constraint allows you to apply many such constraints on several values with
 \section{Problem statement}
 We are given an array of integer variables and a number of constraints of the form:
 \begin{quote}
-There should be at least/most $b$ occurrences of value $v$ among the first $i$ variables.
+There should be at least $lb$ / at most $ub$ occurrences of value $v$ among the first $i$ variables.
 \end{quote}
 In scheduling this will mostly be lower bounds coming from quantities to be produced at a certain date, but there could also be upper bounds coming from storage limitations.
 
 For example let's consider four variables with values either \texttt{A} or \texttt{B}, and the following constraints:
 \begin{itemize}
-    \item there should be at least one \texttt{B} in the first two variables ($b=1$, $v=\texttt{B}$, $i=2$);
-    \item there should be at most two \texttt{A}'s in all the variables ($b=2$, $v=\texttt{A}$, $i=4$).
+    \item there should be at least one \texttt{B} in the first two variables ($lb=1$, $v=\texttt{B}$, $i=2$);
+    \item there should be at most two \texttt{A}'s in all the variables ($ub=2$, $v=\texttt{A}$, $i=4$).
 \end{itemize}
 Then the following results would be valid:
 \begin{itemize}
@@ -128,7 +128,7 @@ In general, we can visually check if a lower bound is stronger than another by `
 \begin{figure}[h!]
     \centering
     \includegraphics[width=0.7\textwidth]{lower-bounds}
-    \caption{The selection of lower bounds}
+    \caption{The selection of lower bounds \textbf{TODO: scan version with arrays}}
     \label{fig:lower-bounds}
 \end{figure}
 
@@ -152,7 +152,7 @@ The visual extension works in a similar way, as shown in figure~\ref{fig:upper-b
 \begin{figure}[h!]
     \centering
     \includegraphics[width=0.6\textwidth]{upper-bounds}
-    \caption{The selection of upper bounds}
+    \caption{The selection of upper bounds \textbf{TODO: scan version with arrays}}
     \label{fig:upper-bounds}
 \end{figure}
 
@@ -193,7 +193,7 @@ First we observe that, when we reach the critical point on the leftmost segment,
 
 Secondly we observe that we cannot prune any further than that segment: take that same example with another upper bound of 5 at $[0,8)$, if the segments have not yet been merged, it means that the critical point in $[3,8)$ has not yet been reached, and there are less than 5 variables assigned to the value in $[0,8)$, which is not enough to trigger pruning linked to that upper bound. Same goes for the lower bounds: there would still be more than 5 variables that have the value in $[0,8)$, and that is too much to trigger pruning.
 
-Therefore, we realize that to obtain the same pruning as individual GCCs, we only have to prune when the segment on the very left reaches its critical point, and when that happens we have to prune the variables of that segment and only there. Afterwards, we can merge that segment with the one on the right, because it becomes the next candidate for pruning. The rest of the time, when the critical point is reached, we just merge the segment with the one on the left.
+Therefore, we realize that to obtain the same pruning as individual GCCs (\emph{after} the bound deduction), we only have to prune when the segment on the very left reaches its critical point, and when that happens we have to prune the variables of that segment and only there. Afterwards, we can merge that segment with the one on the right, because it becomes the next candidate for pruning. The rest of the time, when the critical point is reached, we just merge the segment with the one on the left.
 
 In order to know which variables to prune, we keep an ordered list of the variables that have the value but are not bound to it, which we call the ``unbound list''. When pruning, they will be the only ones we have to consider.
 
@@ -251,5 +251,7 @@ As a result, we obtain the complexity $O(u \log n)$ for the whole search, or an 
 This algorithm gives a bit more pruning than individual GCCs and its running time depends logarithmically on the size of the problem instead of linearly on the number of bounds.
 
 However, because of its complexity of implementation and the lightning speed of GCCFWCs, when used alone, we have only found it to be beneficial for larger test cases with several lower or upper bounds for each value. It could also be useful for average-sized cases where the number of nodes is made critical by other constraints and the additional pruning is valuable.
+
+For more details, see the accompanying performance analysis.
 
 \end{document}
