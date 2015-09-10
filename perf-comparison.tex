@@ -15,6 +15,24 @@ For the PrefixCC problem, whose statement is described in the main technical rep
 
 \tableofcontents
 
+\section{Approaches}
+
+Four approaches were considered for the performance testing:
+\begin{itemize}
+    \item \emph{Multiple GCCFWCs}: our baseline, which consists in adding as many regular \texttt{GCCFWC} constraints as there are prefixes constrained.
+    
+    This approach is expected to be slow because of the redundancy of the reversible structures and simply the large number of constraints to be queued at each node.
+    \item \emph{PrefixCC Segments}: the main approach, described in the accompanying technical report. First performs some deduction and filtering on the bounds and then prunes according to those but in an efficient non-redundant way, by working segment-by-segment instead of prefix-by-prefix.
+    
+    This approach is expected to stay quick even for a large number of variables.
+    \item \emph{PrefixCC Fenwick}: another efficient approach, that makes the same types of deductions as the previous ones but also takes into account the current state of the variables. According to that, it keeps with a Fenwick tree the dynamic list of the best-known bounds for each prefix and prunes values every time the lower and upper bounds become equal in an interval. In that way it is, for each value, arc-consistent on the subset of bounds relative to the value.
+    
+    This approach is expected to have a better pruning.
+    \item \emph{PrefixCC Embedded GCCFWCs}: same as the segments one except that once the bounds are deducted and filtered it keeps a separate count for each constraint which is a bit more redundant (but not as much as the baseline).
+    
+    This approach is expected to be quick for small numbers of variables.
+\end{itemize}
+
 \section{Tests performed}
 
 Two kinds of tests were performed:
