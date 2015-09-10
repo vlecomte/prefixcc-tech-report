@@ -1,0 +1,37 @@
+\documentclass[a4paper,10pt]{article}
+\usepackage{mystyle}
+\usepackage[top=3cm, bottom=3cm, left=3cm, right=3cm]{geometry}
+\def\labelitemi{---}
+
+\begin{document}
+
+\title{\texttt{PrefixCCFWC}: performance comparison}
+\author{Victor Lecomte}
+\maketitle
+
+\begin{abstract}
+For the PrefixCC problem, whose statement is described in the main technical report, we implemented several approaches with different complexities and pruning levels. In order to decide which ones to keep, we performed several benchmarks, which we present here with results, comments and conclusions.
+\end{abstract}
+
+\tableofcontents
+
+\section{Tests performed}
+
+Two kinds of tests were performed:
+\begin{itemize}
+    \item test cases where the lower bounds and upper bounds were very weak so that pruning matters only very little and raw propagation speed is shown (\ref{subsec:tests-weak});
+    \item harder test cases where solutions are harder to find and backtracks take up most of the time, so that the solutions with the strongest pruning win (\ref{subsec:tests-hard}).
+\end{itemize}
+
+This section describes the methodology for generating those test cases.
+
+\subsection{Weak constraints}
+\label{subsec:tests-weak}
+\subsection{Hard to find solutions}
+\label{subsec:tests-hard}
+
+\section{Commented results}
+
+\section{Conclusion}
+
+\end{document}
