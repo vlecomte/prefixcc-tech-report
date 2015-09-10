@@ -31,16 +31,29 @@ For every test, we picked a certain number of variables \texttt{nVariables}. We 
 
 We then added \texttt{nVariables} lower bounds and \texttt{nVariables} upper bounds by choosing a random prefix and a random value to constrain. The actual bounds depended on the benchmark. Given that there are three values, this makes for one bound for each value every three prefixes in average. Such a quantity of bounds was necessary to pick up with clarity the complexities of the approaches relative to the number of bounds.
 
-After that we started a binary static search with the table of variables shuffled in the same way for every approach. The shuffling avoided stumbling upon a special case with a better complexity for some approaches. The search stopped after finding a set number of solutions or reaching a timeout.
+After that we started a binary static search with the table of variables shuffled in the same way for every approach. The shuffling avoided stumbling upon a special case with a better complexity for some approaches. The search stopped after finding a set number of solutions.
 
 For every test, the approaches were run in a random order to remove undesirable biases due to JVM warmup.
 
 \subsection{Weak constraints}
 \label{subsec:tests-weak}
+
+In this benchmark, in order to measure the raw propagation speed of the approaches, we made the solutions very easy to find. To do that, we gave the bounds very conservative values.
+
+We simply assigned the lower bounds to $1/7$ of the size of the prefix and the upper bounds to $6/7$ of the size of the prefix. Since there are only three values those bounds are nearly always respected and we could compare the approaches as they went through similar search trees.
+
 \subsection{Harder cases}
 \label{subsec:tests-hard}
 
+In this benchmark, we wanted to give cases where finding solutions is more tricky so that the solutions with the best pruning have an advantage. But there still had to be some solutions so that we can time the approaches correctly.
+
+To do that, we took a random solution with respect to the domains of the variables and we based the bounds on the effective occurrences of the values in that solution. We allowed lower bounds to vary randomly between $75\%$ and $100\%$ of the number of occurrences in the model solution, and upper bounds to vary randomly between $100\%$ and $125\%$ of the number of occurrences in the model solution. That way we had strong bounds but still at least one solution (and probably many more).
+
+We also tried narrower intervals for the lower bounds and upper bounds but all solutions except the one with the best pruning ended up timing out, which was comforting but did not give interesting data.
+
 \section{Commented results}
+
+
 
 \section{Conclusion}
 
