@@ -19,15 +19,25 @@ For the PrefixCC problem, whose statement is described in the main technical rep
 
 Two kinds of tests were performed:
 \begin{itemize}
-    \item test cases where the lower bounds and upper bounds were very weak so that pruning matters only very little and raw propagation speed is shown (\ref{subsec:tests-weak});
-    \item harder test cases where solutions are harder to find and backtracks take up most of the time, so that the solutions with the strongest pruning win (\ref{subsec:tests-hard}).
+    \item test cases where the lower bounds and upper bounds were very weak so that pruning matters only very little and raw propagation speed is shown;
+    \item harder test cases where solutions are harder to find and backtracks take up most of the time, in order to isolate the solutions with the best pruning.
 \end{itemize}
 
-This section describes the methodology for generating those test cases.
+This section describes the methodology for generating those test cases. We will first touch the common aspects of the benchmarks (\ref{subsec:tests-common}) and then explain the differences between them (\ref{subsec:tests-weak} and \ref{subsec:tests-hard}).
+
+\subsection{Common aspects}
+\label{subsec:tests-common}
+For every test, we picked a certain number of variables \texttt{nVariables}. We used 50, 100 and 200 variables to make our tests. Each variable was given a random domain among three possible values.
+
+We then added \texttt{nVariables} lower bounds and \texttt{nVariables} upper bounds by choosing a random prefix and a random value to constrain. The actual bounds depended on the benchmark. Given that there are three values, this makes for one bound for each value every three prefixes in average. Such a quantity of bounds was necessary to pick up with clarity the complexities of the approaches relative to the number of bounds.
+
+After that we started a binary static search with the table of variables shuffled in the same way for every approach. The shuffling avoided stumbling upon a special case with a better complexity for some approaches. The search stopped after finding a set number of solutions or reaching a timeout.
+
+For every test, the approaches were run in a random order to remove undesirable biases due to JVM warmup.
 
 \subsection{Weak constraints}
 \label{subsec:tests-weak}
-\subsection{Hard to find solutions}
+\subsection{Harder cases}
 \label{subsec:tests-hard}
 
 \section{Commented results}
