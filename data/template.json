@@ -1,0 +1,36 @@
+{
+    "nbApproaches": 3,
+    "baselineName": "Multiple GCCFWCs",
+    "approachNames":
+    [
+        "PrefixCC Segments",
+        "PrefixCC Fenwick",
+        "PrefixCC Embedded GCCFWCs"
+    ],
+    "labels":
+    [
+        TODO
+    ],
+    "nbInstances": TODO,
+    "instanceLabelIndices": [TODO],
+    "baseline":
+    {
+        "times": [],
+        "backtracks": []
+    },
+    "models":
+    [
+        {
+            "times": [],
+            "backtracks": []
+        },
+        {
+            "times": [],
+            "backtracks": []
+        },
+        {
+            "times": [],
+            "backtracks": []
+        }
+    ]
+}
