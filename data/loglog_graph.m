@@ -6,10 +6,10 @@ segments = [3461, 1791, 1487, 1071] ./ nbNodes * 1000;
 fenwick = [4211, 2301, 1982, 1227] ./ nbNodes * 1000;
 embedded = [3523, 2205, 2376, 2148] ./ nbNodes * 1000;
 
-loglog(nbVars, multipleGcc, nbVars, segments, nbVars, fenwick, nbVars, embedded);
+loglog(nbVars, multipleGcc, '.-', nbVars, segments, '.-', nbVars, fenwick, '.-', nbVars, embedded, '.-');
 xlabel('Number of variables')
 ylabel('Time per node (micros)')
-legend('Multiple GCCs', 'PrefixCC Segments', 'PrefixCC Fenwick', 'PrefixCC embedded GCCs');
+legend('Multiple GCCFWCs', 'PrefixCC Segments', 'PrefixCC Fenwick', 'PrefixCC Embedded GCCFWCs');
 
 % See http://stackoverflow.com/questions/4133510/axis-equal-in-a-matlab-loglog-plot
 xLimits = [10 1000];                   %# Limits for the x axis
