@@ -45,7 +45,7 @@ This section describes the methodology for generating those test cases. We will 
 
 \subsection{Common aspects}
 \label{subsec:tests-common}
-For every test, we picked a certain number of variables \texttt{nVariables}. We used 50, 100 and 200 variables to make our tests. Each variable was given a random domain among three possible values.
+For every test, we picked a certain number of variables \texttt{nVariables}. We mostly used 50, 100 and 200 variables to make our tests. Each variable was given a random domain among three possible values.
 
 We then added \texttt{nVariables} lower bounds and \texttt{nVariables} upper bounds by choosing a random prefix and a random value to constrain. The actual bounds depended on the benchmark. Given that there are three values, this makes for one bound for each value every three prefixes in average. Such a quantity of bounds was necessary to pick up with clarity the complexities of the approaches relative to the number of bounds.
 
@@ -71,7 +71,71 @@ We also tried narrower intervals for the lower bounds and upper bounds but all s
 
 \section{Commented results}
 
+We will now present the test results for the different approaches and comment them.
 
+\subsection{Weak constraints tests}
+
+As mentioned before, the aim of the tests with weak constraints was to measure raw propagation speed. We first wanted to evaluate roughly how that speed evolved with the number of variables, so we performed quick tests to get a rough idea. Figure \ref{fig:loglog-complexity} shows the total search time divided by the number of nodes for each approach, at 20, 50, 100 and 200 variables.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[trim = 4cm 6cm 4cm 6cm, width=0.5\textwidth]{img/loglog-graph}
+    \caption{The time spent on a node can increase greatly with the number of variables.}
+    \label{fig:loglog-complexity}
+\end{figure}
+
+We can see that as predicted the approaches that use regular GCCFWCs suffer greatly from the increase because of their redundancy, especially \emph{Multiple GCCFWCs} which uses a separate constraint for each prefix. The time for the other two approaches grows much more reasonably and thus they are better fit for larger instances.
+
+With that first intuition, we then performed more tests at 50, 100 and 200 variables and made performance profiles with the \emph{Multiple GCCFWCs} approach as a baseline. Figure \ref{fig:weak-all-time-static} shows the summarized time profile for those three batches.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\textwidth]{img/weak-all-time-static}
+    \caption{The \emph{Multiple GCCFWCs} approach is clearly distanced in running time by the new approaches.}
+    \label{fig:weak-all-time-static}
+\end{figure}
+
+We can see that all three new approaches are much faster than the \emph{Multiple GCCFWCs} approach, which confirms the results we saw in figure \ref{fig:loglog-complexity}. In addition, we can see three blocks in the time ratios, corresponding from top to bottom to the 50-variables, the 100-variables and the 200-variables batches of tests. They are due to the strong sensibility of our baseline to the number of variables, which also we saw in the previous graph.
+
+As this view does not give much information in the difference between the three other approaches, we also made a profile of the running times relative to the best approach for the each test case, which is shown in figure \ref{fig:weak-all-time}.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\textwidth]{img/weak-all-time}
+    \caption{The \emph{PrefixCC Segments} approach is fastest for a wide majority of the test cases.}
+    \label{fig:weak-all-time}
+\end{figure}
+
+We can see here that the curve for the \emph{PrefixCC Segments} approach only leaves the value 1 above the $0.9$ mark in the instance share, which means it is the fastest approach for more than 90\% of the instances. We also see that the \emph{PrefixCC Fenwick} approach seems to be faster in most cases than the \emph{PrefixCC Embedded GCCFWCs} approach, but we will have to take a closer look. Finally, we note that the \emph{Multiple GCCFWCs} approach is, predictably, out of the graph.
+
+To get a better idea of the relative performance of the these approaches, we have to look at the three test batches separately. Figure \ref{fig:weak-separate} shows us the performance profiles for 50, 100 and 200 variables.
+
+\begin{figure}[h]
+    \centering
+    \begin{subfigure}[b]{0.3\textwidth}
+        \includegraphics[width=\textwidth]{img/weak-50vars-time}
+        \caption{Time at 50 variables}
+    \end{subfigure}
+    \quad
+    \begin{subfigure}[b]{0.3\textwidth}
+        \includegraphics[width=\textwidth]{img/weak-100vars-time}
+        \caption{Time at 100 variables}
+    \end{subfigure}
+    \quad
+    \begin{subfigure}[b]{0.3\textwidth}
+        \includegraphics[width=\textwidth]{img/weak-200vars-time}
+        \caption{Time at 200 variables}
+    \end{subfigure}
+    
+    \caption{As the number of variables increases, \emph{PrefixCC Embedded GCCFWCs} has more and more difficulty keeping up with the speed of the other two approaches.}
+    \label{fig:weak-separate}
+\end{figure}
+
+By looking at the evolution of the relative running time in those three cases, we can see that while \emph{PrefixCC Fenwick} stays quite stable with relation to \emph{PrefixCC Segments}, the \emph{PrefixCC Embedded GCCFWCs} approach has its performance worsen with every factor two. Again, this confirms the results we expected from figure \ref{fig:loglog-complexity}.
+
+To summarize the results of these weak constraints tests, we can say that \emph{Multiple GCCFWCs} and to a lesser extent \emph{PrefixCC Embedded GCCFWCs} have running times that increase too quickly with the number of variables (or equivalently, the number of bounds) while the other two approaches show similar and more reliable performances.
+
+\subsection{Harder tests}
 
 \section{Conclusion}
 
